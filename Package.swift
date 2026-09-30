@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "YTPlayer",
-    platforms: [.macOS("14.2")],  // 14.2: Core Audio process taps
+    platforms: [.macOS("15.0")],
     targets: [
         .executableTarget(name: "YTPlayer", path: "Sources/YTPlayer")
     ]

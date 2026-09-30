@@ -37,6 +37,14 @@ final class ListenLog {
         fileURL = dir.appendingPathComponent("listens.jsonl")
     }
 
+    /// Every logged listen, oldest first. Lines that don't parse are skipped.
+    func entries() -> [Entry] {
+        guard let text = try? String(contentsOf: fileURL, encoding: .utf8) else { return [] }
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return text.split(separator: "\n").compactMap { try? decoder.decode(Entry.self, from: Data($0.utf8)) }
+    }
+
     func record(_ state: PlayerState) {
         let now = Date()
         defer { lastTick = now }

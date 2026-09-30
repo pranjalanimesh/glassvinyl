@@ -4,11 +4,13 @@ import SwiftUI
 ///
 /// - `artInset`: for `.radial`, the gap between the canvas edge and the artwork.
 /// - `glowRoom`: for `.pulse`, how far the canvas extends past the artwork.
+/// - `artShape`, `artCornerRadius`: for `.pulse`, the artwork outline the glow follows.
 struct VisualizerView: View {
     let style: VisualizerStyle
     let palette: VisualizerColor
     let analyzer: AudioAnalyzer
     var artShape: ArtworkStyle = .square
+    var artCornerRadius: CGFloat = 12
     var artInset: CGFloat = 0
     var glowRoom: CGFloat = 0
 
@@ -172,7 +174,7 @@ struct VisualizerView: View {
     }
 
     private func artPath(_ rect: CGRect) -> Path {
-        artShape == .square ? Path(roundedRect: rect, cornerRadius: 12, style: .continuous) : Path(ellipseIn: rect)
+        artShape == .square ? Path(roundedRect: rect, cornerRadius: artCornerRadius, style: .continuous) : Path(ellipseIn: rect)
     }
 
     private func smoothCurve(_ wave: [CGFloat], in size: CGSize) -> Path {

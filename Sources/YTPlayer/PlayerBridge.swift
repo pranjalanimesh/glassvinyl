@@ -11,7 +11,7 @@ final class PlayerBridge {
     static let braveID = "com.brave.Browser"
     static let musicAppID = "com.brave.Browser.app.cinhimbnkkaeohfgghhklpknlkffjgod"
 
-    var onPoll: ((PlayerState, [QueueItem]?) -> Void)?
+    var onPoll: ((PlayerState, UpNext?) -> Void)?
     /// Why nothing can be shown (Brave closed, no tab, permission off), or nil when all is well.
     var onProblem: ((String?) -> Void)?
     /// Include the Up Next list in each poll. Only on while the queue is on screen.
@@ -34,56 +34,88 @@ final class PlayerBridge {
     // MARK: - Playback
 
     func togglePlay() { fire("__ytp.toggle()") }
+    func toggleLike() { fire("__ytp.toggleLike()") }
     func next() { fire("__ytp.next()") }
     func previous() { fire("__ytp.previous()") }
     func seek(to seconds: Double) { fire("__ytp.seek(\(seconds))") }
 
     // MARK: - Queue
 
-    enum InsertPosition: String {
-        case next = "INSERT_AFTER_CURRENT_VIDEO"
-        case end = "INSERT_AT_END"
-    }
-
-    func add(_ videoId: String, at position: InsertPosition) {
-        fire("__ytp.add(\(literal(videoId)), \(literal(position.rawValue)))")
+    /// Adds songs right after the current one (`next`) or at the end of Up Next.
+    /// Returns how many were added.
+    func addToQueue(_ videoIds: [String], next: Bool, completion: @escaping (Result<Int, Error>) -> Void) {
+        start({ id in "__ytp.add(\(literal(id)), \(array(videoIds)), \(next))" }) { [weak self] (result: Result<Int, Error>) in
+            completion(result)
+            self?.poll()
+        }
     }
     func playNow(_ videoId: String) { fire("__ytp.playNow(\(literal(videoId)))") }
     func jump(to index: Int) { fire("__ytp.jump(\(index))") }
-    func remove(at index: Int) { fire("__ytp.remove(\(index))") }
+    func playAutoplay(at index: Int, videoId: String) { fire("__ytp.playAutoplay(\(index), \(literal(videoId)))") }
+    func remove(at index: Int, videoId: String) { fire("__ytp.remove(\(index), \(literal(videoId)))") }
+    /// `to` is the song's final position in the full queue.
+    func move(from: Int, to: Int, videoId: String) { fire("__ytp.move(\(from), \(to), \(literal(videoId)))") }
+
+    // MARK: - Playlists
+
+    func playPlaylist(_ playlistId: String, shuffle: Bool) {
+        fire("__ytp.playPlaylist(\(literal(playlistId)), \(shuffle))")
+    }
+
+    /// Plays a playlist starting at one of its songs.
+    func playFromPlaylist(_ playlistId: String, videoId: String) {
+        fire("__ytp.playFromPlaylist(\(literal(playlistId)), \(literal(videoId)))")
+    }
 
     // MARK: - Search
 
     func search(_ query: String, completion: @escaping (Result<[SearchResult], Error>) -> Void) {
-        let id = UUID().uuidString
-        call("__ytp.search(\(literal(id)), \(literal(query)))") { [weak self] result in
-            if case .failure(let error) = result { return completion(.failure(error)) }
-            self?.awaitSearch(id, attemptsLeft: 40, completion: completion)
+        start({ id in "__ytp.search(\(literal(id)), \(literal(query)))" }, completion: completion)
+    }
+
+    /// Async form of `start`: `expression` receives the call id as a JavaScript literal.
+    func value<T: Decodable>(_ expression: @escaping (String) -> String) async throws -> T {
+        try await withCheckedThrowingContinuation { continuation in
+            start({ id in expression(Self.literal(id)) }) { (result: Result<T, Error>) in
+                continuation.resume(with: result)
+            }
         }
     }
 
-    private struct SearchResponse: Decodable {
-        let results: [SearchResult]?
+    /// Starts an async page call under a fresh id, then waits for its result.
+    private func start<T: Decodable>(_ expression: (String) -> String,
+                                     completion: @escaping (Result<T, Error>) -> Void) {
+        let id = UUID().uuidString
+        call(expression(id)) { [weak self] result in
+            if case .failure(let error) = result { return completion(.failure(error)) }
+            self?.awaitResult(id, attemptsLeft: 240, completion: completion)  // about a minute
+        }
+    }
+
+    /// `{ value }` or `{ error }` once settled; `null` while still running.
+    private struct Pending<T: Decodable>: Decodable {
+        let value: T?
         let error: String?
     }
 
-    private func awaitSearch(_ id: String, attemptsLeft: Int,
-                             completion: @escaping (Result<[SearchResult], Error>) -> Void) {
-        guard attemptsLeft > 0 else { return completion(.failure(BridgeError("Search timed out"))) }
+    private func awaitResult<T: Decodable>(_ id: String, attemptsLeft: Int,
+                                           completion: @escaping (Result<T, Error>) -> Void) {
+        guard attemptsLeft > 0 else { return completion(.failure(BridgeError("YouTube Music didn't answer in time"))) }
         call("__ytp.result(\(literal(id)))") { [weak self] result in
             switch result {
             case .failure(let error):
                 completion(.failure(error))
             case .success(let json):
-                guard let response = try? JSONDecoder().decode(SearchResponse.self, from: Data(json.utf8)) else {
+                guard let pending = try? JSONDecoder().decode(Pending<T>.self, from: Data(json.utf8)) else {
                     // Still running.
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-                        self?.awaitSearch(id, attemptsLeft: attemptsLeft - 1, completion: completion)
+                        self?.awaitResult(id, attemptsLeft: attemptsLeft - 1, completion: completion)
                     }
                     return
                 }
-                if let error = response.error { return completion(.failure(BridgeError(error))) }
-                completion(.success(response.results ?? []))
+                if let error = pending.error { return completion(.failure(BridgeError(error))) }
+                guard let value = pending.value else { return completion(.failure(BridgeError("Empty answer"))) }
+                completion(.success(value))
             }
         }
     }
@@ -101,23 +133,45 @@ final class PlayerBridge {
     private struct PollResponse: Decodable {
         let state: PlayerState
         let queue: [QueueItem]?
+        let autoplay: [QueueItem]?
     }
 
     func poll() {
         guard !isPolling else { return }
         isPolling = true
-        call("__ytp.poll(\(wantsQueue))") { [weak self] result in
+        call("__ytp.poll(\(wantsQueue), \(EQSettings.current.javaScript))") { [weak self] result in
             guard let self else { return }
             self.isPolling = false
             switch result {
             case .success(let json):
                 guard let response = try? JSONDecoder().decode(PollResponse.self, from: Data(json.utf8)) else { return }
                 self.onProblem?(nil)
-                self.onPoll?(response.state, response.queue)
+                let upNext = response.queue.map { UpNext(queue: $0, autoplay: response.autoplay ?? []) }
+                self.onPoll?(response.state, upNext)
             case .failure(let error):
                 self.onProblem?(error.localizedDescription)
                 self.onPoll?(PlayerState(), nil)
             }
+        }
+    }
+
+    // MARK: - Equalizer
+
+    private var lastEQSent: String?
+    private var eqUpdateScheduled = false
+
+    /// Sends the EQ settings to the page now instead of on the next poll, so slider moves
+    /// are heard straight away. Coalesces bursts of changes into one call.
+    func applyEQSoon() {
+        guard !eqUpdateScheduled else { return }
+        eqUpdateScheduled = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+            guard let self else { return }
+            self.eqUpdateScheduled = false
+            let eq = EQSettings.current.javaScript
+            guard eq != self.lastEQSent else { return }
+            self.lastEQSent = eq
+            self.call("__ytp.setEq(\(eq))") { _ in }
         }
     }
 
@@ -169,7 +223,16 @@ final class PlayerBridge {
     }
 
     private func literal(_ string: String) -> String {
+        Self.literal(string)
+    }
+
+    /// A Swift string as a JavaScript string literal.
+    nonisolated static func literal(_ string: String) -> String {
         BraveScript.jsLiteral(string)
+    }
+
+    private func array(_ strings: [String]) -> String {
+        "[" + strings.map(literal).joined(separator: ",") + "]"
     }
 }
 
