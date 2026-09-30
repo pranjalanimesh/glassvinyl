@@ -1,7 +1,11 @@
 #!/bin/sh
 # Builds GlassVinyl.app (menu-bar only, no Dock icon) from the Swift package.
+#   ./build.sh          build and sign GlassVinyl.app
+#   ./build.sh --zip    also write dist/GlassVinyl.zip for a release
+# VERSION sets the app version (default 0.1.0).
 set -e
 cd "$(dirname "$0")"
+VERSION="${VERSION:-0.1.0}"
 
 swift build -c release
 APP=GlassVinyl.app
@@ -19,7 +23,8 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>CFBundleName</key><string>GlassVinyl</string>
   <key>CFBundleExecutable</key><string>GlassVinyl</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>0.1</string>
+  <key>CFBundleShortVersionString</key><string>$VERSION</string>
+  <key>CFBundleVersion</key><string>$VERSION</string>
   <key>LSMinimumSystemVersion</key><string>15.0</string>
   <key>LSUIElement</key><true/>
   <key>NSHighResolutionCapable</key><true/>
@@ -30,4 +35,11 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 PLIST
 
 codesign --force --sign - "$APP"
-echo "Built $APP — run: open $APP"
+echo "Built $APP $VERSION. Run: open $APP"
+
+if [ "$1" = "--zip" ]; then
+  mkdir -p dist
+  rm -f dist/GlassVinyl.zip
+  ditto -c -k --keepParent "$APP" dist/GlassVinyl.zip
+  echo "Wrote dist/GlassVinyl.zip"
+fi
