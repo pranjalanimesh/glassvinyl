@@ -17,7 +17,7 @@ struct KaraokePanel: View {
     var body: some View {
         if !engine.isInstalled {
             Section {
-                Text("Karaoke needs the separation tools in ~/Library/Application Support/YTPlayer/stems (Python, audio-separator, yt-dlp) and ffmpeg from Homebrew.")
+                Text("Karaoke needs the separation tools in ~/Library/Application Support/GlassVinyl/stems (Python, audio-separator, yt-dlp) and ffmpeg from Homebrew.")
                     .foregroundStyle(.secondary)
             }
         } else {

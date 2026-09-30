@@ -2,9 +2,9 @@
 import PackageDescription
 
 let package = Package(
-    name: "YTPlayer",
+    name: "GlassVinyl",
     platforms: [.macOS("15.0")],
     targets: [
-        .executableTarget(name: "YTPlayer", path: "Sources/YTPlayer")
+        .executableTarget(name: "GlassVinyl", path: "Sources/GlassVinyl")
     ]
 )

@@ -3,7 +3,7 @@ import Foundation
 /// Records every track you play (including skips) as one JSON line, so playlists
 /// can later be built from what you actually listen to.
 ///
-/// File: ~/Library/Application Support/YTPlayer/listens.jsonl
+/// File: ~/Library/Application Support/GlassVinyl/listens.jsonl
 @MainActor
 final class ListenLog {
     struct Entry: Codable {
@@ -31,10 +31,7 @@ final class ListenLog {
     }()
 
     init() {
-        let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("YTPlayer", isDirectory: true)
-        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        fileURL = dir.appendingPathComponent("listens.jsonl")
+        fileURL = AppPaths.support.appendingPathComponent("listens.jsonl")
     }
 
     /// Every logged listen, oldest first. Lines that don't parse are skipped.

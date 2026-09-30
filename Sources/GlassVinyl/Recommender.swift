@@ -135,7 +135,7 @@ final class Recommender {
         }
 
         // An empty folder, so Claude has no project files to read.
-        let workDir = FileManager.default.temporaryDirectory.appendingPathComponent("YTPlayerRecommender")
+        let workDir = FileManager.default.temporaryDirectory.appendingPathComponent("GlassVinylRecommender")
         try FileManager.default.createDirectory(at: workDir, withIntermediateDirectories: true)
 
         let process = Process()

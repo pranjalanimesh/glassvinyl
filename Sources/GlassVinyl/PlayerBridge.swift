@@ -238,7 +238,7 @@ final class PlayerBridge {
 
 /// AppleScript plumbing. Everything here runs on `queue`, one script at a time.
 private enum BraveScript {
-    static let queue = DispatchQueue(label: "ytplayer.applescript")
+    static let queue = DispatchQueue(label: "glassvinyl.applescript")
 
     static func jsLiteral(_ string: String) -> String {
         let data = try? JSONEncoder().encode(string)
@@ -300,7 +300,7 @@ private enum BraveScript {
             let message: String
             switch error[NSAppleScript.errorNumber] as? Int {
             case 12: message = "In Brave: View > Developer > Allow JavaScript from Apple Events"
-            case -1743: message = "Allow YTPlayer to control Brave in System Settings > Privacy > Automation"
+            case -1743: message = "Allow GlassVinyl to control Brave in System Settings > Privacy > Automation"
             default: message = error[NSAppleScript.errorMessage] as? String ?? "AppleScript error"
             }
             return .failure(PlayerBridge.BridgeError(message))

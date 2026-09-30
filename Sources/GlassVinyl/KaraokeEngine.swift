@@ -4,7 +4,7 @@ import Foundation
 /// Karaoke: removes the vocals from the current song on this Mac, then plays the
 /// instrumental with an adjustable amount of vocal mixed back in.
 ///
-/// Pipeline (tools live in ~/Library/Application Support/YTPlayer/stems/venv):
+/// Pipeline (tools live in ~/Library/Application Support/GlassVinyl/stems/venv):
 /// 1. yt-dlp downloads the song's audio.
 /// 2. ffmpeg converts it to WAV (the separator can't read YouTube's WebM/Opus).
 /// 3. audio-separator runs a Mel-Band RoFormer model on the GPU (Metal), writing a vocal
@@ -47,8 +47,7 @@ final class KaraokeEngine: ObservableObject {
         didSet { vocalsNode.volume = Float(vocalLevel) }
     }
 
-    nonisolated static let home = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        .appendingPathComponent("YTPlayer/stems", isDirectory: true)
+    nonisolated static let home = AppPaths.support.appendingPathComponent("stems", isDirectory: true)
     nonisolated private static let bin = home.appendingPathComponent("venv/bin")
     nonisolated private static let cache = home.appendingPathComponent("cache", isDirectory: true)
     nonisolated private static let ffmpeg = ["/opt/homebrew/bin/ffmpeg", "/usr/local/bin/ffmpeg"]

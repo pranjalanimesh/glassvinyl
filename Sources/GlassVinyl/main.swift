@@ -1,5 +1,7 @@
 import AppKit
 
+AppPaths.migrateFromYTPlayer()
+
 MainActor.assumeIsolated {
     let app = NSApplication.shared
     let delegate = AppDelegate()

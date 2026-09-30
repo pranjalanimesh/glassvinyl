@@ -147,7 +147,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // The window follows each tab's height.
             controller.sizingOptions = .preferredContentSize
             let window = TopAnchoredWindow(contentViewController: controller)
-            window.title = "YTPlayer Settings"
+            window.title = "GlassVinyl Settings"
             window.styleMask = [.titled, .closable]
             window.isReleasedWhenClosed = false
             // Floats like the widget, so the two stay side by side.
@@ -191,7 +191,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func makeStatusItem() -> NSStatusItem {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        item.button?.image = NSImage(systemSymbolName: "music.note", accessibilityDescription: "YT Player")
+        item.button?.image = NSImage(systemSymbolName: "music.note", accessibilityDescription: "GlassVinyl")
 
         let menu = NSMenu()
         menu.addItem(withTitle: "Show/Hide Player", action: #selector(toggleWidget), keyEquivalent: "")

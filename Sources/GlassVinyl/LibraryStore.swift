@@ -36,7 +36,7 @@ struct LibraryPlaylist: Codable, Equatable, Identifiable {
 }
 
 /// A local copy of the YouTube Music library (playlists and Liked Music), saved to
-/// ~/Library/Application Support/YTPlayer/library.json.
+/// ~/Library/Application Support/GlassVinyl/library.json.
 ///
 /// The UI reads from the copy, so it opens instantly and works while YouTube Music is
 /// busy. `sync()` refreshes it from YouTube Music. Edits go to YouTube Music and the copy

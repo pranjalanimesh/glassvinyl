@@ -30,7 +30,7 @@ final class AudioAnalyzer: @unchecked Sendable {
     private let lock = NSLock()
     private var latest = Frame()
 
-    private let audioQueue = DispatchQueue(label: "ytplayer.audio")
+    private let audioQueue = DispatchQueue(label: "glassvinyl.audio")
     private var tapID = AudioObjectID(kAudioObjectUnknown)
     private var aggregateID = AudioObjectID(kAudioObjectUnknown)
     private var procID: AudioDeviceIOProcID?
@@ -62,7 +62,7 @@ final class AudioAnalyzer: @unchecked Sendable {
             try createTap()
             isRunning = true
         } catch {
-            NSLog("YTPlayer visualizer: \(error)")
+            NSLog("GlassVinyl visualizer: \(error)")
             stop()
         }
     }
@@ -117,7 +117,7 @@ final class AudioAnalyzer: @unchecked Sendable {
         // The tap is read through a private aggregate device built on the current output.
         let outputUID = try defaultOutputUID()
         let aggregate: [String: Any] = [
-            kAudioAggregateDeviceNameKey: "YTPlayer Visualizer",
+            kAudioAggregateDeviceNameKey: "GlassVinyl Visualizer",
             kAudioAggregateDeviceUIDKey: UUID().uuidString,
             kAudioAggregateDeviceMainSubDeviceKey: outputUID,
             kAudioAggregateDeviceIsPrivateKey: true,
