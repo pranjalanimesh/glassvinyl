@@ -16,9 +16,21 @@ struct KaraokePanel: View {
 
     var body: some View {
         if !engine.isInstalled {
-            Section {
-                Text("Karaoke needs the separation tools in ~/Library/Application Support/GlassVinyl/stems (Python, audio-separator, yt-dlp) and ffmpeg from Homebrew.")
+            Section("Setup") {
+                Text("Karaoke removes vocals on this Mac with Mel-Band RoFormer. It needs a one-time install of about 1 GB (a Python environment with audio-separator and yt-dlp) in ~/Library/Application Support/GlassVinyl/stems, plus ffmpeg (brew install ffmpeg). The vocal model, about 900 MB, downloads the first time you use it.")
                     .foregroundStyle(.secondary)
+                HStack {
+                    if let status = engine.installStatus {
+                        ProgressView().controlSize(.small)
+                        Text(status).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                    }
+                    Spacer()
+                    Button("Install") { engine.install() }
+                        .disabled(engine.installStatus != nil)
+                }
+                if case .failed(let message) = engine.phase {
+                    Text(message).font(.caption).foregroundStyle(.red)
+                }
             }
         } else {
             Section("Song") {

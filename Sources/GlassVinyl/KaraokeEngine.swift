@@ -42,6 +42,8 @@ final class KaraokeEngine: ObservableObject {
     @Published private(set) var position: Double = 0
     @Published private(set) var duration: Double = 0
     @Published private(set) var cacheBytes: Int64 = 0
+    /// Latest line from the tool installer while it runs; nil when not installing.
+    @Published private(set) var installStatus: String?
     /// 0 = full karaoke, 1 = the original mix.
     @Published var vocalLevel: Double = 0 {
         didSet { vocalsNode.volume = Float(vocalLevel) }
@@ -77,6 +79,42 @@ final class KaraokeEngine: ObservableObject {
         engine.attach(vocalsNode)
         vocalsNode.volume = 0
         refreshCacheSize()
+    }
+
+    // MARK: - Installing
+
+    /// Runs the bundled install-karaoke.sh (Python environment with audio-separator and yt-dlp).
+    func install() {
+        guard installStatus == nil,
+              let script = Bundle.main.url(forResource: "install-karaoke", withExtension: "sh") else { return }
+        installStatus = "Starting…"
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/sh")
+        process.arguments = [script.path]
+        let output = Pipe()
+        process.standardOutput = output
+        process.standardError = output
+        output.fileHandleForReading.readabilityHandler = { handle in
+            let text = String(decoding: handle.availableData, as: UTF8.self)
+            guard let line = text.split(separator: "\n").last.map(String.init), !line.isEmpty else { return }
+            Task { @MainActor [weak self] in self?.installStatus = line }
+        }
+        process.terminationHandler = { finished in
+            output.fileHandleForReading.readabilityHandler = nil
+            let status = finished.terminationStatus
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.installStatus = nil
+                if status != 0 { self.phase = .failed("Install didn't finish (exit \(status)). Run install-karaoke.sh in Terminal to see why.") }
+                self.objectWillChange.send()  // isInstalled is computed from the files on disk
+            }
+        }
+        do {
+            try process.run()
+        } catch {
+            installStatus = nil
+            phase = .failed("Couldn't start the installer: \(error.localizedDescription)")
+        }
     }
 
     // MARK: - Preparing
