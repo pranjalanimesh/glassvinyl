@@ -1,4 +1,6 @@
-# GlassVinyl
+<p align="center"><img src="docs/logo.svg" width="128" alt="GlassVinyl logo"></p>
+
+<h1 align="center">GlassVinyl</h1>
 
 A floating, translucent mini-player for YouTube Music on macOS. It sits on top of your windows, shows the song that's playing, and adds a few things the web app doesn't have: a draggable queue, a playlist manager, a 10-band equalizer, AI song picks and on-device karaoke.
 

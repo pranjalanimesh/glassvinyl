@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <title>GlassVinyl</title>
+  <defs>
+    <!-- Background: deep indigo, like the app's dark glass -->
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3a2a7a"/>
+      <stop offset="1" stop-color="#120c2e"/>
+    </linearGradient>
+    <!-- Record label: the app's like-button pink into the sunset orange -->
+    <linearGradient id="label" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff4d8d"/>
+      <stop offset="1" stop-color="#ffa24a"/>
+    </linearGradient>
+    <!-- Soft light across the record's surface -->
+    <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.22"/>
+      <stop offset="0.45" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <!-- Glass panel: brighter at the top edge -->
+    <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.30"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.10"/>
+    </linearGradient>
+    <filter id="frost" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000000" flood-opacity="0.45"/>
+    </filter>
+    <clipPath id="tile">
+      <rect width="512" height="512" rx="114"/>
+    </clipPath>
+    <clipPath id="glassArea">
+      <rect x="196" y="262" width="276" height="176" rx="34"/>
+    </clipPath>
+
+    <!-- The record, reused sharp and blurred behind the glass -->
+    <g id="record">
+      <circle cx="226" cy="226" r="172" fill="#0c0b12"/>
+      <g fill="none" stroke="#ffffff">
+        <circle cx="226" cy="226" r="156" stroke-opacity="0.07" stroke-width="2"/>
+        <circle cx="226" cy="226" r="140" stroke-opacity="0.09" stroke-width="2"/>
+        <circle cx="226" cy="226" r="124" stroke-opacity="0.07" stroke-width="2"/>
+        <circle cx="226" cy="226" r="108" stroke-opacity="0.09" stroke-width="2"/>
+        <circle cx="226" cy="226" r="92" stroke-opacity="0.07" stroke-width="2"/>
+      </g>
+      <circle cx="226" cy="226" r="172" fill="url(#sheen)"/>
+      <circle cx="226" cy="226" r="64" fill="url(#label)"/>
+      <circle cx="226" cy="226" r="9" fill="#0c0b12"/>
+    </g>
+  </defs>
+
+  <g clip-path="url(#tile)">
+    <rect width="512" height="512" fill="url(#bg)"/>
+    <use href="#record" filter="url(#shadow)"/>
+
+    <!-- Frosted glass card: the blurred record shows through it -->
+    <g clip-path="url(#glassArea)">
+      <use href="#record" filter="url(#frost)"/>
+      <rect x="196" y="262" width="276" height="176" fill="url(#glass)"/>
+    </g>
+    <rect x="196.5" y="262.5" width="275" height="175" rx="34" fill="none" stroke="#ffffff" stroke-opacity="0.45" stroke-width="2"/>
+
+    <!-- Visualizer bars on the glass -->
+    <g fill="#ffffff">
+      <rect x="236" y="362" width="18" height="44" rx="9" fill-opacity="0.85"/>
+      <rect x="268" y="326" width="18" height="80" rx="9" fill-opacity="0.95"/>
+      <rect x="300" y="346" width="18" height="60" rx="9" fill-opacity="0.85"/>
+      <rect x="332" y="306" width="18" height="100" rx="9"/>
+      <rect x="364" y="338" width="18" height="68" rx="9" fill-opacity="0.85"/>
+      <rect x="396" y="370" width="18" height="36" rx="9" fill-opacity="0.75"/>
+    </g>
+  </g>
+</svg>
