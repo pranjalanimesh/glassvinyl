@@ -60,6 +60,8 @@ open GlassVinyl.app
 
 `build.sh` compiles the Swift package, wraps it in `GlassVinyl.app` and signs it ad hoc. `./build.sh --zip` also writes `dist/GlassVinyl.zip`.
 
+The app icon is generated from `docs/logo.svg`. After changing the logo, run `swift scripts/make-icon.swift` to rebuild `Resources/AppIcon.icns`.
+
 ## How it works
 
 YouTube Music runs its player, queue and library inside the web page. GlassVinyl uses AppleScript's `execute javascript` to inject [`Resources/bridge.js`](Resources/bridge.js) into that page. The script reads the player state once a second and calls the page's own queue actions and API requests, the same ones its menus use.
